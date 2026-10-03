@@ -5,7 +5,7 @@ public class Alert {
     private String type;
     private Severity severity ;
     private long timestamp;
-    Alert(String ip, String type,Severity severity,long timestamp){
+    public Alert(String ip, String type,Severity severity,long timestamp){
         this.ip=ip;
         this.type=type;
         this.severity=severity;
