@@ -155,9 +155,9 @@ Edge cases covered: empty file, missing file, malformed lines, bad port numbers.
 
 | Member | Responsibility |
 |---|---|
-| A | Input and reporting: LogEvent, LogGenerator, LogParser, BlacklistDetector, ReportGenerator, testing |
+| A | Input and reporting: LogEvent, LogGenerator, LogParser, BlacklistDetector,BlockList, ReportGenerator, testing |
 | B | Detectors: BruteForceDetector, PortScanDetector, DetectionEngine |
-| C | Response: AlertManager, ResponseEngine, BlockList |
+| C | Response: AlertManager, ResponseEngine  |
 | D | Console menu and user interface |
 
 Replace A, B, C and D with names, and add the owners of NetworkGraph and storage.
