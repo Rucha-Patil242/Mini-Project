@@ -42,14 +42,14 @@ public class ResponseEngine {
     }
 
     /**
-     * Convenience for DetectionEngine: auto-blocks on HIGH or CRITICAL alerts.
+     * Auto-blocks on HIGH or CRITICAL alerts.
      * @return true if an IP was newly blocked.
      */
     public boolean handleAlert(Alert alert) {
         if (alert == null) return false;
-        Severity s = alert.getSeverity();
+        Severity s = alert.getseverity();
         if (s == Severity.HIGH || s == Severity.CRITICAL) {
-            return block(alert.getSourceIp());
+            return block(alert.getip());
         }
         return false;
     }

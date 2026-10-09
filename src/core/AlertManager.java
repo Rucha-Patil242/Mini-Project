@@ -15,16 +15,16 @@ import java.util.PriorityQueue;
 /**
  * Receives alerts from the detectors.
  * - PriorityQueue: pending alerts, most severe first (ties: oldest first).
- * - LinkedList:    capped history of recent alerts (O(1) add/remove at ends).
- * - HashMap:       last alert time per (type, sourceIp), used for cooldown.
+ * - LinkedList:    capped history of recent alerts (O(1) add/remove at the ends).
+ * - HashMap:       last alert time per (type, ip), used for cooldown.
  * - ArrayList:     full list of every accepted alert, used by the report.
  */
 public class AlertManager {
 
     private static final Comparator<Alert> SEVERITY_THEN_TIME = (a, b) -> {
-        int bySeverity = b.getSeverity().compareTo(a.getSeverity()); // CRITICAL first
+        int bySeverity = b.getseverity().compareTo(a.getseverity()); // CRITICAL first
         if (bySeverity != 0) return bySeverity;
-        return Long.compare(a.getTimestamp(), b.getTimestamp());
+        return Long.compare(a.gettimestamp(), b.gettimestamp());
     };
 
     private final PriorityQueue<Alert> pending = new PriorityQueue<>(SEVERITY_THEN_TIME);
@@ -39,12 +39,12 @@ public class AlertManager {
     public boolean raise(Alert alert) {
         if (alert == null) return false;
 
-        String key = alert.getType() + "|" + alert.getSourceIp();
+        String key = alert.gettype() + "|" + alert.getip();
         Long last = lastSeen.get(key);
-        if (last != null && alert.getTimestamp() - last < Config.ALERT_COOLDOWN) {
+        if (last != null && alert.gettimestamp() - last < Config.ALERT_COOLDOWN) {
             return false;
         }
-        lastSeen.put(key, alert.getTimestamp());
+        lastSeen.put(key, alert.gettimestamp());
 
         pending.add(alert);
         allAlerts.add(alert);
