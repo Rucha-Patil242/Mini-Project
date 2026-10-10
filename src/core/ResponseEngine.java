@@ -4,6 +4,7 @@ import model.Alert;
 import model.Severity;
 
 import java.util.Stack;
+import java.util.LinkedHashSet;
 
 /**
  * Blocks and unblocks IPs.
