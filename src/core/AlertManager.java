@@ -21,6 +21,9 @@ import java.util.PriorityQueue;
  */
 public class AlertManager {
 
+    private static final long ALERT_COOLDOWN = 60_000L;
+    private static final int MAX_HISTORY = 1_000;
+
     private static final Comparator<Alert> SEVERITY_THEN_TIME = (a, b) -> {
         int bySeverity = b.getseverity().compareTo(a.getseverity()); // CRITICAL first
         if (bySeverity != 0) return bySeverity;
@@ -41,7 +44,7 @@ public class AlertManager {
 
         String key = alert.gettype() + "|" + alert.getip();
         Long last = lastSeen.get(key);
-        if (last != null && alert.gettimestamp() - last < Config.ALERT_COOLDOWN) {
+        if (last != null && alert.gettimestamp() - last < ALERT_COOLDOWN) {
             return false;
         }
         lastSeen.put(key, alert.gettimestamp());
@@ -49,7 +52,7 @@ public class AlertManager {
         pending.add(alert);
         allAlerts.add(alert);
         history.addLast(alert);
-        if (history.size() > Config.MAX_HISTORY) {
+        if (history.size() > MAX_HISTORY) {
             history.removeFirst();
         }
         return true;

@@ -23,7 +23,7 @@ public class ResponseEngine {
      * @return true if newly blocked, false otherwise.
      */
     public boolean block(String ip) {
-        if (blockList.add(ip)) {
+        if (blockList.block(ip)) {
             undoStack.push(ip.trim());
             return true;
         }
@@ -37,7 +37,7 @@ public class ResponseEngine {
     public String undo() {
         if (undoStack.isEmpty()) return null;
         String ip = undoStack.pop();
-        blockList.remove(ip);
+        blockList.unblock(ip);
         return ip;
     }
 
@@ -55,7 +55,7 @@ public class ResponseEngine {
     }
 
     public boolean isBlocked(String ip) {
-        return blockList.contains(ip);
+        return blockList.isBlocked(ip);
     }
 
     public BlockList getBlockList() {
