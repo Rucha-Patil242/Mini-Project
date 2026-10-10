@@ -11,7 +11,7 @@ import java.util.Map;
 public class BruteForceDetector implements Detector {
 
     private static final int CRITICAL_THRESHOLD = 10;
-    private static final long TIME_WINDOW = 60;
+    private static final long TIME_WINDOW = 60000;
 
     private final Map<String, Integer> failedAttempts = new HashMap<>();
     private final Map<String, Long> firstAttemptTime = new HashMap<>();
