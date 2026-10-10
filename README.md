@@ -127,17 +127,16 @@ test/        test code
 | NetworkGraph | [fill in] | [fill in] |
 | ReportGenerator | `HashMap` + sort | Count alerts per IP and per type, then sort for the top 10 |
 
-## Build and run
+## Build
 
 Requires JDK 11 or newer. From the project root in PowerShell:
 
 ```powershell
 $sources = Get-ChildItem src -Recurse -Filter *.java | ForEach-Object { $_.FullName }
 javac --release 11 -d out $sources
-java -cp out ui.Main
 ```
 
-With no arguments, `ui.Main` generates a demo log under `out/`, runs the blacklist alert and response flow, and prints a report. To process an existing log instead, pass its path, for example `java -cp out ui.Main data/logs.txt`.
+The project currently has no application entry point, so the compiled classes cannot be launched as a standalone program yet.
 
 ## Testing
 
