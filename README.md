@@ -129,14 +129,15 @@ test/        test code
 
 ## Build and run
 
-Requires JDK 11 or newer. From the project root:
+Requires JDK 11 or newer. From the project root in PowerShell:
 
-```
-javac -d out src/model/*.java src/parser/*.java src/detectors/*.java src/core/*.java src/graph/*.java src/storage/*.java src/ui/*.java
-java -cp out <MainClass>
+```powershell
+$sources = Get-ChildItem src -Recurse -Filter *.java | ForEach-Object { $_.FullName }
+javac --release 11 -d out $sources
+java -cp out ui.Main
 ```
 
-Replace `<MainClass>` with the class that contains `main`.
+With no arguments, `ui.Main` generates a demo log under `out/`, runs the blacklist alert and response flow, and prints a report. To process an existing log instead, pass its path, for example `java -cp out ui.Main data/logs.txt`.
 
 ## Testing
 
