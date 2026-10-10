@@ -12,7 +12,7 @@ import java.util.Set;
 public class PortScanDetector implements Detector {
 
     private static final int HIGH_THRESHOLD = 5;
-    private static final long TIME_WINDOW = 60;
+    private static final long TIME_WINDOW = 60000;
 
     private final Map<String, Long> firstScanTime = new HashMap<>();
     private final Map<String, Set<Integer>> scannedPorts = new HashMap<>();
