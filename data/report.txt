@@ -1,0 +1,20 @@
+==== CyberShield Alert Report ====
+
+Total alerts: 26
+
+-- Alerts by type --
+Brute Force Attack   10
+Port Scan            10
+BLACKLIST            6
+
+-- Top 10 attackers --
+ 1. 192.0.2.10         1 alert(s)
+ 2. 192.0.2.25         1 alert(s)
+ 3. 192.0.2.66         1 alert(s)
+ 4. 198.51.100.10      1 alert(s)
+ 5. 198.51.100.11      1 alert(s)
+ 6. 198.51.100.12      1 alert(s)
+ 7. 198.51.100.13      1 alert(s)
+ 8. 198.51.100.14      1 alert(s)
+ 9. 198.51.100.15      1 alert(s)
+10. 198.51.100.16      1 alert(s)
