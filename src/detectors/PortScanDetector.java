@@ -4,10 +4,10 @@ package detectors;
 import model.Alert;
 import model.LogEvent;
 import model.Severity;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.HashMap;//used to create key(IPs) value(attempts) pair 
+import java.util.HashSet;//to store unique ports for a particular key
+import java.util.Map;//interface
+import java.util.Set;//interface
 
 public class PortScanDetector implements Detector {
 
@@ -34,7 +34,7 @@ public class PortScanDetector implements Detector {
             ports.add(e.getPort());
             scannedPorts.put(key, ports);
 
-            return null;
+            return null;//no alert 
         }
 
         Set<Integer> ports = scannedPorts.get(key);
@@ -49,6 +49,6 @@ public class PortScanDetector implements Detector {
             );
         }
 
-        return null;
+        return null;//no alert
     }
 }
