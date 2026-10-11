@@ -15,22 +15,21 @@ import java.util.Random;
  *
  * WHY THIS CLASS EXISTS
  *   We have no real network to monitor. So this class invents the traffic:
- *   mostly harmless events, plus three attackers hidden inside. Every other
- *   module (parser, detectors, alerts, graph, report) is tested on this file.
+ *   mostly harmless events, plus three kinds of attackers hidden inside. Every
+ *   other module (parser, detectors, alerts, graph, report) is tested on this file.
  *
  * HOW TO USE
  *   LogGenerator.generate("data/logs.txt", 1000);
  *
- * WHAT IT PRODUCES (with normalCount = 1000)
+ * WHAT IT PRODUCES (with normalCount = 1000 and the default settings below)
  *   1000 normal events
- *   +  6 brute force events    from 203.0.113.9
+ *   + 10 brute force events    from 203.0.113.9   (BRUTE_FORCE_ATTEMPTS x BRUTE_FORCE_ATTACKERS)
  *   + 12 port scan events      from 198.51.100.7
  *   +  4 blacklisted events    from 45.33.32.156
- *   = 1022 events, sorted by timestamp, one per line:
+ *   = 1026 events, sorted by timestamp, one per line:
  *     timestamp, srcIp, dstIp, port, type, details
  *
- * Owner: C (covering A while A is away). Used by: LogParser, B's detectors,
- * D's menu, and the 50K timing test.
+ * Owner: A. Used by: LogParser, B's detectors, D's menu, and the 50K timing test.
  */
 public class LogGenerator {
 
@@ -45,6 +44,15 @@ public class LogGenerator {
     public static final String BRUTE_FORCE_IP = "203.0.113.9";
     public static final String PORT_SCAN_IP   = "198.51.100.7";
     public static final String BLACKLISTED_IP = "45.33.32.156";
+
+    // How many failed logins EACH brute force attacker makes.
+    // Must be at least the detector's threshold (10) or no alert fires.
+    private static final int BRUTE_FORCE_ATTEMPTS = 10;
+
+    // How many different brute force attacker IPs to create.
+    // 1 = just BRUTE_FORCE_IP. Set to 10 for ten attackers:
+    // 203.0.113.9, 203.0.113.10, 203.0.113.11, ... (each last number goes up by 1).
+    private static final int BRUTE_FORCE_ATTACKERS = 1;
 
     /**
      * Writes a log file containing normal traffic plus injected attacks.
@@ -64,6 +72,8 @@ public class LogGenerator {
 
         // ---------- Step 1: normal traffic ----------
         // Harmless events: no LOGIN_FAILED, only 4 ports, so no detector fires.
+        // Only this step uses rnd, so the normal traffic is identical on every run
+        // no matter how the attack settings above are changed.
         long time = 1000;                                   // start time in ms
         for (int i = 0; i < normalCount; i++) {
             time += 1 + rnd.nextInt(20);                    // time moves forward 1..20 ms
@@ -75,12 +85,18 @@ public class LogGenerator {
         }
 
         // ---------- Step 2: attack 1 - brute force ----------
-        // 6 failed logins, 1 second apart, all within 60 s.
-        // BruteForceDetector should fire on the 5th failure (threshold = 5).
-        // The 6th is extra, to show the detector resets after alerting.
-        for (int i = 0; i < 6; i++) {
-            events.add(new LogEvent(2000 + i * 1000L, BRUTE_FORCE_IP, "10.0.0.5",
-                    22, "LOGIN_FAILED", "user=admin"));
+        // Each attacker makes BRUTE_FORCE_ATTEMPTS failed logins, 1 second apart,
+        // all well inside the detector's 60 s window.
+        // BruteForceDetector should fire on the 10th failure (threshold = 10).
+        // With exactly 10 attempts the alert fires on the last one. Use 12 to
+        // also show the detector resetting after it alerts.
+        for (int a = 0; a < BRUTE_FORCE_ATTACKERS; a++) {
+            // First attacker uses BRUTE_FORCE_IP, the others count up from its last number.
+            String attackerIp = (a == 0) ? BRUTE_FORCE_IP : "203.0.113." + (9 + a);
+            for (int i = 0; i < BRUTE_FORCE_ATTEMPTS; i++) {
+                events.add(new LogEvent(2000 + i * 1000L, attackerIp, "10.0.0.5",
+                        22, "LOGIN_FAILED", "user=admin"));
+            }
         }
 
         // ---------- Step 3: attack 2 - port scan ----------

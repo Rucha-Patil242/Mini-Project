@@ -1,0 +1,11 @@
+==== CyberShield Alert Report ====
+
+Total alerts: 2
+
+-- Alerts by type --
+BLACKLIST            1
+Port Scan            1
+
+-- Top 10 attackers --
+ 1. 198.51.100.7       1 alert(s)
+ 2. 45.33.32.156       1 alert(s)
