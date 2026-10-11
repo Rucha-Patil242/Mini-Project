@@ -150,7 +150,7 @@ public class ConsoleMenu {
 
         } while (choice != 0);
 
-        System.out.println("Goodbye.");
+        System.out.println("Session ended. Exiting Security Monitoring & Intrusion Detection Platform.");
     }
 
     // the menu screen, with a status line that updates after every action
