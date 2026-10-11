@@ -23,10 +23,10 @@ import java.util.Random;
  *
  * WHAT IT PRODUCES (with normalCount = 1000 and the default settings below)
  *   1000 normal events
- *   + 10 brute force events    from 203.0.113.9   (BRUTE_FORCE_ATTEMPTS x BRUTE_FORCE_ATTACKERS)
+ *   + 11 brute force events    from 203.0.113.9   (BRUTE_FORCE_ATTEMPTS x BRUTE_FORCE_ATTACKERS)
  *   + 12 port scan events      from 198.51.100.7
  *   +  4 blacklisted events    from 45.33.32.156
- *   = 1026 events, sorted by timestamp, one per line:
+ *   = 1027 events, sorted by timestamp, one per line:
  *     timestamp, srcIp, dstIp, port, type, details
  *
  * Owner: A. Used by: LogParser, B's detectors, D's menu, and the 50K timing test.
@@ -46,8 +46,9 @@ public class LogGenerator {
     public static final String BLACKLISTED_IP = "45.33.32.156";
 
     // How many failed logins EACH brute force attacker makes.
-    // Must be at least the detector's threshold (10) or no alert fires.
-    private static final int BRUTE_FORCE_ATTEMPTS = 10;
+    // BruteForceDetector alerts when the count is MORE than 10 (count > 10),
+    // so the alert fires on the 11th failure. 10 attempts is one short.
+    private static final int BRUTE_FORCE_ATTEMPTS = 11;
 
     // How many different brute force attacker IPs to create.
     // 1 = just BRUTE_FORCE_IP. Set to 10 for ten attackers:
@@ -87,9 +88,9 @@ public class LogGenerator {
         // ---------- Step 2: attack 1 - brute force ----------
         // Each attacker makes BRUTE_FORCE_ATTEMPTS failed logins, 1 second apart,
         // all well inside the detector's 60 s window.
-        // BruteForceDetector should fire on the 10th failure (threshold = 10).
-        // With exactly 10 attempts the alert fires on the last one. Use 12 to
-        // also show the detector resetting after it alerts.
+        // BruteForceDetector should fire on the 11th failure (count > 10).
+        // The detector does not reset after alerting, so every attempt beyond
+        // the 11th would raise another alert for the same IP.
         for (int a = 0; a < BRUTE_FORCE_ATTACKERS; a++) {
             // First attacker uses BRUTE_FORCE_IP, the others count up from its last number.
             String attackerIp = (a == 0) ? BRUTE_FORCE_IP : "203.0.113." + (9 + a);
