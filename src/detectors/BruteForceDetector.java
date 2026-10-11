@@ -33,9 +33,9 @@ public class BruteForceDetector implements Detector {
                 || currentTime - firstAttemptTime.get(key) > TIME_WINDOW) {
 
             firstAttemptTime.put(key, currentTime);
-            failedAttempts.put(key, 1);
+            failedAttempts.put(key, 1);//we start new track for the ip as time window expired
 
-            return null;
+            return null;//no alert
         }
 
         int count = failedAttempts.get(key);
