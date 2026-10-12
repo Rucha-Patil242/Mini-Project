@@ -9,7 +9,7 @@ A Java-based security monitoring and intrusion detection platform. It ingests ne
 - Log generation and parsing with safe handling of malformed input
 - Three pluggable detectors: brute force, port scan, blacklist
 - Alert management with a cooldown, so one attacker does not flood the analyst with duplicates
-- Automatic response: HIGH and CRITICAL alerts add the attacker to the blocklist
+- Automatic response: MEDIUM alerts print `sending email`; HIGH and CRITICAL alerts add the attacker to the blocklist
 - Manual block and unblock by the analyst
 - Network graph of the traffic seen in the logs
 - Summary report of top attackers and alerts by type
@@ -73,7 +73,7 @@ All detectors implement `Detector` (`Alert analyze(LogEvent e)`), so the engine 
 
 ### Alerts and response: `core/`
 - **AlertManager**: receives alerts, applies a cooldown so repeated alerts for the same attacker are reduced to one, and keeps the alert history.
-- **ResponseEngine**: when an alert is HIGH or CRITICAL, blocks the attacker's IP.
+- **ResponseEngine**: prints `sending email` for MEDIUM alerts and blocks the attacker's IP for HIGH or CRITICAL alerts.
 - **BlockList**: the in-memory set of blocked IPs. Supports block, unblock and lookup. It is lost when the program closes.
 
 ### Blacklist vs blocklist

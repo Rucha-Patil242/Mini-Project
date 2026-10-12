@@ -43,12 +43,16 @@ public class ResponseEngine {
     }
 
     /**
-     * Auto-blocks on HIGH or CRITICAL alerts.
+     * Prints an email notification for MEDIUM alerts and blocks HIGH or CRITICAL alerts.
      * @return true if an IP was newly blocked.
      */
     public boolean handleAlert(Alert alert) {
         if (alert == null) return false;
         Severity s = alert.getseverity();
+        if (s == Severity.MEDIUM) {
+            System.out.println("sending email to admin");
+            return false;
+        }
         if (s == Severity.HIGH || s == Severity.CRITICAL) {
             return block(alert.getip());
         }
