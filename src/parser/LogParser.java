@@ -28,8 +28,6 @@ import java.util.ArrayList;
  *   Lines with the wrong number of fields, a non-numeric timestamp or port,
  *   or a port outside 0..65535 are counted as "skipped" and the parser moves on.
  *   A missing file returns an empty list instead of crashing.
- *
- * Owner: C (covering A while A is away). A takes this over on return.
  */
 public class LogParser {
 
