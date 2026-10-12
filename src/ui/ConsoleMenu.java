@@ -31,20 +31,7 @@ public class ConsoleMenu {
         int choice = -1;
 
         do {
-            System.out.println();
-            System.out.println("1  Generate logs");
-            System.out.println("2  Load logs from file");
-            System.out.println("3  Run detection");
-            System.out.println("4  Show next alert");
-            System.out.println("5  Show alert history");
-            System.out.println("6  Show blocklist");
-            System.out.println("7  Block IP manually");
-            System.out.println("8  Undo last block");
-            System.out.println("9  Reachable hosts (BFS)");
-            System.out.println("10 Attack path (DFS)");
-            System.out.println("11 Generate report");
-            System.out.println("0  Exit");
-            System.out.print("Choice: ");
+            printMenu();
 
             try {
                 choice = Integer.parseInt(sc.nextLine().trim());
@@ -53,6 +40,8 @@ public class ConsoleMenu {
                 choice = -1;
                 continue;
             }
+
+            System.out.println();
 
             if (choice == 1) {
                 try {
@@ -73,6 +62,7 @@ public class ConsoleMenu {
                 }
 
             } else if (choice == 4) {
+                System.out.println("--- Next alert ---");
                 Alert next = alertManager.nextAlert();
                 if (next == null) {
                     System.out.println("No pending alerts.");
@@ -81,6 +71,7 @@ public class ConsoleMenu {
                 }
 
             } else if (choice == 5) {
+                System.out.println("--- Alert history ---");
                 List<Alert> history = alertManager.getHistory();
                 if (history.isEmpty()) {
                     System.out.println("No alerts yet.");
@@ -91,6 +82,7 @@ public class ConsoleMenu {
                 }
 
             } else if (choice == 6) {
+                System.out.println("--- Blocklist ---");
                 List<String> blocked = blockList.getAll();
                 if (blocked.isEmpty()) {
                     System.out.println("Blocklist is empty.");
@@ -116,6 +108,7 @@ public class ConsoleMenu {
                 }
 
             } else if (choice == 9) {
+                System.out.println("--- Reachable hosts (BFS) ---");
                 System.out.print("Compromised IP: ");
                 String ip = sc.nextLine().trim();
                 List<String> reachable = graph.bfs(ip);
@@ -126,6 +119,7 @@ public class ConsoleMenu {
                 }
 
             } else if (choice == 10) {
+                System.out.println("--- Attack path (DFS) ---");
                 System.out.print("Attacker IP: ");
                 String start = sc.nextLine().trim();
                 System.out.print("Critical server IP: ");
@@ -156,15 +150,50 @@ public class ConsoleMenu {
 
         } while (choice != 0);
 
-        System.out.println("Goodbye.");
+        System.out.println("Session ended. Exiting Security Monitoring & Intrusion Detection Platform.");
     }
 
-    // reads data/logs.txt into events, then builds the network graph
+    // the menu screen, with a status line that updates after every action
+    void printMenu() {
+        System.out.println();
+        System.out.println("==================================================");
+        System.out.println("  SECURITY MONITORING & INTRUSION DETECTION");
+        System.out.println("==================================================");
+        System.out.println("  Events: " + events.size()
+                + "  |  Pending alerts: " + alertManager.pendingCount()
+                + "  |  Blocked IPs: " + blockList.size());
+        System.out.println("--------------------------------------------------");
+        System.out.println("  LOGS");
+        System.out.println("    1  Generate logs");
+        System.out.println("    2  Load logs from file");
+        System.out.println("  DETECTION");
+        System.out.println("    3  Run detection");
+        System.out.println("    4  Show next alert");
+        System.out.println("    5  Show alert history");
+        System.out.println("  RESPONSE");
+        System.out.println("    6  Show blocklist");
+        System.out.println("    7  Block IP manually");
+        System.out.println("    8  Undo last block");
+        System.out.println("  NETWORK");
+        System.out.println("    9  Reachable hosts (BFS)");
+        System.out.println("    10 Attack path (DFS)");
+        System.out.println("  REPORT");
+        System.out.println("    11 Generate report");
+        System.out.println("    0  Exit");
+        System.out.println("--------------------------------------------------");
+        System.out.print("  Choice: ");
+    }
+
+    // reads data/logs.txt into events, clears old results, then builds the graph
     void loadLogs() {
         events = LogParser.parse("data/logs.txt");
         logsLoaded = !events.isEmpty();
         System.out.println("Loaded " + events.size() + " events.");
         if (logsLoaded) {
+            // clear alerts and blocks from any earlier run
+            alertManager = new AlertManager();
+            blockList = new BlockList();
+            responseEngine = new ResponseEngine(blockList);
             buildGraph();
         }
     }
@@ -206,9 +235,10 @@ public class ConsoleMenu {
         }
         System.out.println("Detection finished. " + accepted + " alerts, "
                 + blockList.size() + " IPs blocked.");
+        System.out.println("Use option 4 or 5 to view the alerts.");
     }
 
-        void printAlert(Alert a) {
+    void printAlert(Alert a) {
         System.out.println(a);
     }
 }

@@ -11,111 +11,96 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * LogGenerator - creates a FAKE network log file for testing and demos.
+ * Creates a fake network log file: normal traffic plus planted attacks, so the
+ * expected alerts are known. Each line is: timestamp, srcIp, dstIp, port, type, details.
  *
- * WHY THIS CLASS EXISTS
- *   We have no real network to monitor. So this class invents the traffic:
- *   mostly harmless events, plus three attackers hidden inside. Every other
- *   module (parser, detectors, alerts, graph, report) is tested on this file.
- *
- * HOW TO USE
- *   LogGenerator.generate("data/logs.txt", 1000);
- *
- * WHAT IT PRODUCES (with normalCount = 1000)
- *   1000 normal events
- *   +  6 brute force events    from 203.0.113.9
- *   + 12 port scan events      from 198.51.100.7
- *   +  4 blacklisted events    from 45.33.32.156
- *   = 1022 events, sorted by timestamp, one per line:
- *     timestamp, srcIp, dstIp, port, type, details
- *
- * Owner: C (covering A while A is away). Used by: LogParser, B's detectors,
- * D's menu, and the 50K timing test.
+ * With normalCount = 1000 and the defaults below: 1000 + 110 brute force
+ * + 120 port scan + 24 blacklisted = 1254 events, sorted by timestamp.
  */
 public class LogGenerator {
 
-    // ---------- Settings: change these in ONE place only ----------
-
-    // Ports used by normal traffic. Only 4 on purpose: a normal client can
-    // never touch 10 different ports, so it can never trigger the port scan detector.
+    // Only 4 ports, so normal clients can never look like a port scan.
     private static final int[] NORMAL_PORTS = {80, 443, 22, 53};
 
-    // The three attacker IPs. They are constants so the team can refer to them.
-    // BLACKLISTED_IP must match the line in data/blacklist.txt exactly.
+    // First brute force and port scan attacker; the rest count up from these.
     public static final String BRUTE_FORCE_IP = "203.0.113.9";
     public static final String PORT_SCAN_IP   = "198.51.100.7";
-    public static final String BLACKLISTED_IP = "45.33.32.156";
+
+    // Must match the lines in data/blacklist.txt exactly.
+    private static final String[] BLACKLISTED_IPS = {
+            "45.33.32.156", "192.0.2.10", "192.0.2.25",
+            "192.0.2.66", "198.51.100.99", "203.0.113.200"
+    };
+    public static final String BLACKLISTED_IP = BLACKLISTED_IPS[0];
+
+    // The detector alerts when count > 10, so the 11th failure triggers it.
+    private static final int BRUTE_FORCE_ATTEMPTS = 11;
+    private static final int BRUTE_FORCE_ATTACKERS = 10;
+    private static final int PORT_SCAN_ATTACKERS = 10;
+    private static final int BLACKLIST_EVENTS_PER_IP = 4;
+
+    // 12 distinct ports; the detector fires at 10.
+    private static final int[] SCAN_PORTS =
+            {21, 22, 23, 25, 80, 110, 143, 443, 3306, 8080, 8443, 3389};
 
     /**
-     * Writes a log file containing normal traffic plus injected attacks.
-     *
      * @param file        path to write, e.g. "data/logs.txt"
-     * @param normalCount how many harmless events to create (e.g. 1000)
-     * @throws IOException if the file cannot be written (the menu catches this)
+     * @param normalCount how many harmless events to create
+     * @throws IOException if the file cannot be written
      */
     public static void generate(String file, int normalCount) throws IOException {
 
-        // Fixed seed (42): the "random" numbers are the same on every run,
-        // so everyone gets the same file and the same alerts. Good for demos/tests.
+        // Fixed seed: same data on every run.
         Random rnd = new Random(42);
-
-        // ArrayList holds every event in memory until we sort and write them.
         List<LogEvent> events = new ArrayList<>();
 
-        // ---------- Step 1: normal traffic ----------
-        // Harmless events: no LOGIN_FAILED, only 4 ports, so no detector fires.
-        long time = 1000;                                   // start time in ms
+        // Normal traffic (the only step that uses rnd).
+        long time = 1000;
         for (int i = 0; i < normalCount; i++) {
-            time += 1 + rnd.nextInt(20);                    // time moves forward 1..20 ms
-            String src  = "192.168.1." + (1 + rnd.nextInt(50)); // 50 possible clients
-            String dst  = "10.0.0."    + (1 + rnd.nextInt(4));  // 4 possible servers
+            time += 1 + rnd.nextInt(20);
+            String src  = "192.168.1." + (1 + rnd.nextInt(50));
+            String dst  = "10.0.0."    + (1 + rnd.nextInt(4));
             int port    = NORMAL_PORTS[rnd.nextInt(NORMAL_PORTS.length)];
             String type = rnd.nextBoolean() ? "CONNECT" : "LOGIN_OK";
             events.add(new LogEvent(time, src, dst, port, type, "none"));
         }
 
-        // ---------- Step 2: attack 1 - brute force ----------
-        // 6 failed logins, 1 second apart, all within 60 s.
-        // BruteForceDetector should fire on the 5th failure (threshold = 5).
-        // The 6th is extra, to show the detector resets after alerting.
-        for (int i = 0; i < 6; i++) {
-            events.add(new LogEvent(2000 + i * 1000L, BRUTE_FORCE_IP, "10.0.0.5",
-                    22, "LOGIN_FAILED", "user=admin"));
+        // Brute force: failed logins 1 second apart, inside the 60 s window.
+        for (int a = 0; a < BRUTE_FORCE_ATTACKERS; a++) {
+            String attackerIp = (a == 0) ? BRUTE_FORCE_IP : "203.0.113." + (9 + a);
+            for (int i = 0; i < BRUTE_FORCE_ATTEMPTS; i++) {
+                events.add(new LogEvent(2000 + i * 1000L, attackerIp, "10.0.0.5",
+                        22, "LOGIN_FAILED", "user=admin"));
+            }
         }
 
-        // ---------- Step 3: attack 2 - port scan ----------
-        // 12 CONNECTs to 12 DIFFERENT ports, 100 ms apart.
-        // PortScanDetector should fire on the 10th distinct port (threshold = 10).
-        int[] scanPorts = {21, 22, 23, 25, 80, 110, 143, 443, 3306, 8080, 8443, 3389};
-        for (int i = 0; i < scanPorts.length; i++) {
-            events.add(new LogEvent(4000 + i * 100L, PORT_SCAN_IP, "10.0.0.2",
-                    scanPorts[i], "CONNECT", "none"));
+        // Port scan: one CONNECT per port, 100 ms apart.
+        for (int s = 0; s < PORT_SCAN_ATTACKERS; s++) {
+            String scannerIp = (s == 0) ? PORT_SCAN_IP : "198.51.100." + (7 + s);
+            for (int i = 0; i < SCAN_PORTS.length; i++) {
+                events.add(new LogEvent(4000 + i * 100L, scannerIp, "10.0.0.2",
+                        SCAN_PORTS[i], "CONNECT", "none"));
+            }
         }
 
-        // ---------- Step 4: attack 3 - blacklisted IP ----------
-        // Looks like ordinary traffic, but the source IP is in data/blacklist.txt.
-        // BlacklistDetector should fire on the very first event.
-        for (int i = 0; i < 4; i++) {
-            events.add(new LogEvent(6000 + i * 100L, BLACKLISTED_IP, "10.0.0.1",
-                    80, "CONNECT", "none"));
+        // Blacklisted IPs: ordinary-looking traffic from listed sources.
+        for (String badIp : BLACKLISTED_IPS) {
+            for (int i = 0; i < BLACKLIST_EVENTS_PER_IP; i++) {
+                events.add(new LogEvent(6000 + i * 100L, badIp, "10.0.0.1",
+                        80, "CONNECT", "none"));
+            }
         }
 
-        // ---------- Step 5: sort by time ----------
-        // Attack events were added after the normal ones, so the list is out of
-        // order. Detectors use sliding time windows and REQUIRE time order.
-        // Comparator + sort is O(n log n).
+        // Detectors need time order; attacks were added out of order.
         events.sort((a, b) -> Long.compare(a.getTimestamp(), b.getTimestamp()));
 
-        // ---------- Step 6: write the file ----------
         File f = new File(file);
         if (f.getParentFile() != null) {
-            f.getParentFile().mkdirs();                     // create data/ if missing (fresh clone)
+            f.getParentFile().mkdirs();
         }
-        // try-with-resources closes the file automatically, even if an error occurs.
-        // BufferedWriter batches writes, which is much faster for 50,000 lines.
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(f))) {
             for (LogEvent e : events) {
-                bw.write(e.toString());                     // "timestamp, src, dst, port, type, details"
+                bw.write(e.toString());
                 bw.newLine();
             }
         }
